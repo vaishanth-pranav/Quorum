@@ -5,7 +5,11 @@
 
 ## 1. Team Name & Member Names
 - **Team Name:** Quorum
-- **Team Members:** Vaishanth Pranav
+- **Team Members:**
+  1. Vaishanth Pranav C S
+  2. Sai Adithya K
+  3. Surya R
+
 
 ---
 
