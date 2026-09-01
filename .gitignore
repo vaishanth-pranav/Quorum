@@ -1,1 +1,25 @@
+# Environment and Secrets
+.env
+.env.local
+*.env
+
+# Python Virtual Environments
 crewai-venv/
+venv/
+env/
+.venv/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Trace Runs (Optional: keep directory structure, ignore individual run logs)
+backend/trace/runs/trace_*.json
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
