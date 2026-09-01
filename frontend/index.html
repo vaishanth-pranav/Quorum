@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quorum — Adaptive AI Boardroom</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Vue 3 & Marked.js -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #06090e;
+      --bg-surface: #0c121c;
+      --bg-surface-elevated: #111927;
+      --bg-card: rgba(17, 25, 39, 0.7);
+      --bg-input: #080d14;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(56, 189, 248, 0.4);
+      --border-accent: rgba(56, 189, 248, 0.25);
+      
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --cyan-glow: #38bdf8;
+      --cyan-subtle: rgba(56, 189, 248, 0.12);
+      --indigo-glow: #6366f1;
+      --emerald-glow: #10b981;
+      --emerald-subtle: rgba(16, 185, 129, 0.12);
+      --rose-glow: #f43f5e;
+      --rose-subtle: rgba(244, 63, 94, 0.12);
+      --amber-glow: #f59e0b;
+      --amber-subtle: rgba(245, 158, 11, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.07) 0%, transparent 45%),
+        linear-gradient(to bottom, #06090e, #090e17);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+    /* Layout Shell */
+    .app-shell {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Top Navigation Bar */
+    .header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+      border: 1px solid var(--cyan-glow);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--cyan-glow);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .system-status-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald-glow);
+      box-shadow: 0 0 10px var(--emerald-glow);
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* Main Workspace Grid */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Panels & Glassmorphism */
+    .glass-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Form Controls & Inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .custom-select, .custom-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 12px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .custom-select:focus, .custom-textarea:focus {
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+    }
+
+    .custom-textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .surprise-box {
+      border-left: 3px solid var(--rose-glow);
+      background: rgba(244, 63, 94, 0.03);
+      padding: 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 18px;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #04121e;
+      flex: 1;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--text-secondary);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Cockpit Metrics Bar */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .metric-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Protocol Pipeline Stepper */
+    .protocol-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+    }
+
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .step-pill:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .step-pill.active {
+      color: var(--cyan-glow);
+      background: var(--cyan-subtle);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .step-pill.done {
+      color: var(--emerald-glow);
+      background: var(--emerald-subtle);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .step-arrow {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    /* Tabs Bar */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: var(--cyan-glow);
+      background: var(--cyan-subtle);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Boardroom Agents Grid */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .agent-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .agent-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+
+    .agent-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+    }
+
+    .agent-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .agent-focus {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Decisions Dual Workspace */
+    .decisions-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .decisions-container.has-surprise {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .decision-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .decision-panel.revised {
+      border-color: rgba(244, 63, 94, 0.35);
+      background: linear-gradient(180deg, rgba(244, 63, 94, 0.04), rgba(12, 18, 28, 0.95));
+    }
+
+    .decision-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+    }
+
+    .decision-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-baseline {
+      background: var(--cyan-subtle);
+      color: var(--cyan-glow);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .tag-revised {
+      background: var(--rose-subtle);
+      color: var(--rose-glow);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    /* Rendered Markdown Styling */
+    .markdown-content {
+      color: #cbd5e1;
+      font-size: 13.5px;
+      line-height: 1.65;
+    }
+
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-primary);
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    .markdown-content h1 { font-size: 18px; }
+    .markdown-content h2 { font-size: 16px; color: var(--cyan-glow); border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 6px; }
+    .markdown-content h3 { font-size: 14px; font-weight: 700; color: #f8fafc; }
+
+    .markdown-content p { margin-bottom: 10px; }
+    .markdown-content ul, .markdown-content ol { margin-left: 18px; margin-bottom: 12px; }
+    .markdown-content li { margin-bottom: 4px; }
+    .markdown-content strong { color: #ffffff; font-weight: 600; }
+    
+    .markdown-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 12.5px;
+    }
+
+    .markdown-content th, .markdown-content td {
+      padding: 8px 12px;
+      border: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+
+    .markdown-content th {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Trace Events Log */
+    .trace-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .trace-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .trace-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .trace-stage-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-analyse { background: var(--cyan-subtle); color: var(--cyan-glow); }
+    .badge-share { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .badge-challenge { background: var(--rose-subtle); color: var(--rose-glow); }
+    .badge-response { background: var(--amber-subtle); color: var(--amber-glow); }
+    .badge-compare { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .badge-decide { background: var(--emerald-subtle); color: var(--emerald-glow); }
+    .badge-surprise { background: var(--rose-subtle); color: var(--rose-glow); }
+    .badge-reassess { background: var(--amber-subtle); color: var(--amber-glow); }
+
+    .trace-output {
+      background: var(--bg-input);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 12.5px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    /* Strategy Comparison Matrix Table */
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .matrix-table th, .matrix-table td {
+      padding: 12px 16px;
+      border: 1px solid var(--border-subtle);
+      vertical-align: top;
+    }
+
+    .matrix-table th {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 480px;
+      gap: 16px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .workspace-grid { grid-template-columns: 1fr; }
+      .metrics-bar { grid-template-columns: repeat(2, 1fr); }
+      .decisions-container.has-surprise { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .app-shell { padding: 16px; }
+      .metrics-bar { grid-template-columns: 1fr; }
+      .header-nav { flex-direction: column; gap: 12px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="app-shell">
+    
+    <!-- Top Nav Header -->
+    <header class="header-nav">
+      <div class="brand">
+        <div class="brand-icon">Q</div>
+        <div class="brand-text">
+          <h1>QUORUM</h1>
+          <p>Adaptive Multi-Agent AI Boardroom</p>
+        </div>
+      </div>
+      <div class="system-status-chip">
+        <div class="status-dot"></div>
+        <span>{{ statusMessage }}</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="workspace-grid">
+      
+      <!-- Left Sidebar: Controls & Case Intake -->
+      <aside class="glass-panel">
+        <div class="panel-header">
+          <span class="panel-title">⚙️ Control & Case Intake</span>
+        </div>
+
+        <!-- Preset Selector -->
+        <div class="form-group">
+          <label class="form-label">Competition Benchmark Preset</label>
+          <select class="custom-select" v-model="selectedDomain" @change="onPresetChange">
+            <option value="mobility">AeroCharge Mobility (EV Infrastructure)</option>
+            <option value="finswarm">FinSwarm (Fintech / Digital Credit)</option>
+            <option value="saasswarm">SaaSSwarm (Enterprise Cloud SaaS)</option>
+            <option value="chipswarm">ChipSwarm (Semiconductor Foundry)</option>
+            <option value="">Custom / Unseen Competition Case</option>
+          </select>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="form-group">
+          <label class="form-label">Execution Mode</label>
+          <select class="custom-select" v-model="executionMode">
+            <option value="mock">⚡ Deterministic Fast Simulation (Instant)</option>
+            <option value="live">🧠 Live Gemini AI / Multi-Agent Swarm</option>
+          </select>
+        </div>
+
+        <!-- Case Input -->
+        <div class="form-group">
+          <label class="form-label">Active Business Case Brief</label>
+          <textarea class="custom-textarea" v-model="caseText" placeholder="Paste competition business case brief here..."></textarea>
+        </div>
+
+        <!-- Surprise Shock Input -->
+        <div class="surprise-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label class="form-label" style="color:var(--rose-glow); margin:0;">🚨 Surprise Round Shock</label>
+            <button class="btn-secondary" style="padding:4px 8px; font-size:11px; border-radius:4px;" @click="toggleSurprise">
+              {{ hasSurprise ? 'Clear Surprise' : 'Inject Preset Shock' }}
+            </button>
+          </div>
+          <textarea class="custom-textarea" style="min-height:90px;" v-model="surpriseText" placeholder="Paste mid-run disruption event or toggle preset..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-row">
+          <button class="btn btn-primary" @click="runSwarm" :disabled="isRunning || !caseText.trim()">
+            <span v-if="!isRunning">🚀 Launch Boardroom Swarm</span>
+            <span v-else>Deliberating Swarm...</span>
+          </button>
+          <button class="btn btn-secondary" @click="resetCase" :disabled="isRunning">
+            🔄 Reset
+          </button>
+        </div>
+
+        <div v-if="errorMessage" style="color:var(--rose-glow); font-size:12px; margin-top:12px; font-weight:500;">
+          ⚠️ {{ errorMessage }}
+        </div>
+      </aside>
+
+      <!-- Right Main: Cockpit Workspace -->
+      <main class="glass-panel">
+        
+        <!-- Empty State Before Execution -->
+        <div v-if="!result" class="empty-state">
+          <div style="font-size:48px;">🏛️</div>
+          <h3>Boardroom Ready for Ingestion</h3>
+          <p style="max-width:480px; font-size:13.5px;">
+            Select a benchmark domain (FinSwarm, SaaSSwarm, ChipSwarm, Mobility) or paste an unseen competition case on the left, then launch Quorum.
+          </p>
+          <button class="btn btn-primary" style="max-width:240px;" @click="runSwarm">
+            🚀 Launch Initial Deliberation
+          </button>
+        </div>
+
+        <!-- Active Boardroom Results -->
+        <div v-else>
+          
+          <!-- Cockpit Metrics Bar -->
+          <div class="metrics-bar">
+            <div class="metric-card">
+              <span class="metric-label">Inferred Industry</span>
+              <span class="metric-value" style="font-size:15px; color:var(--cyan-glow);">{{ result.profile.industry }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Active Boardroom Agents</span>
+              <span class="metric-value">{{ result.agents.length }} / 8 <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">(Capacity Ceiling)</span></span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Protocol Trace Events</span>
+              <span class="metric-value">{{ result.records.length }} Stages</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Decision Status</span>
+              <span class="metric-value" style="color:var(--emerald-glow);">
+                {{ result.revised_decision ? '⚡ Revised (Post-Surprise)' : '✔ Baseline Mandate' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Protocol Pipeline Stepper -->
+          <div class="protocol-stepper">
+            <template v-for="(stage, idx) in allProtocolStages" :key="stage">
+              <div :class="['step-pill', getStepClass(stage)]" @click="activeTab = 'trace'; traceFilter = stage">
+                <span>{{ stage }}</span>
+              </div>
+              <span v-if="idx < allProtocolStages.length - 1" class="step-arrow">➔</span>
+            </template>
+          </div>
+
+          <!-- Workspace Tabs Navigation -->
+          <div class="tabs-nav">
+            <button :class="['tab-btn', activeTab === 'decision' ? 'active' : '']" @click="activeTab = 'decision'">
+              🏛️ Executive Decision
+            </button>
+            <button :class="['tab-btn', activeTab === 'agents' ? 'active' : '']" @click="activeTab = 'agents'">
+              👥 Boardroom Swarm ({{ result.agents.length }})
+            </button>
+            <button :class="['tab-btn', activeTab === 'matrix' ? 'active' : '']" @click="activeTab = 'matrix'">
+              ⚖️ Strategy Matrix & Math
+            </button>
+            <button :class="['tab-btn', activeTab === 'trace' ? 'active' : '']" @click="activeTab = 'trace'">
+              📜 Protocol Trace ({{ result.records.length }})
+            </button>
+            <button :class="['tab-btn', activeTab === 'profile' ? 'active' : '']" @click="activeTab = 'profile'">
+              📋 Case Profile (20 Dimensions)
+            </button>
+          </div>
+
+          <!-- Tab 1: Executive Decision -->
+          <div v-show="activeTab === 'decision'">
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:14px;">
+              <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" @click="copyDecision">
+                📋 Copy Decision Markdown
+              </button>
+            </div>
+
+            <div :class="['decisions-container', result.revised_decision ? 'has-surprise' : '']">
+              <!-- Baseline Decision Card -->
+              <div class="decision-panel">
+                <div class="decision-header">
+                  <span class="decision-tag tag-baseline">🏛️ Baseline Executive Decision</span>
+                  <span style="font-size:11px; color:var(--text-muted);">Pre-Surprise Mandate</span>
+                </div>
+                <div class="markdown-content" v-html="renderMarkdown(result.baseline_decision)"></div>
+              </div>
+
+              <!-- Revised Decision Card (if surprise exists) -->
+              <div v-if="result.revised_decision" class="decision-panel revised">
+                <div class="decision-header">
+                  <span class="decision-tag tag-revised">🚨 Revised Executive Decision</span>
+                  <span style="font-size:11px; color:var(--rose-glow); font-weight:600;">Post-Surprise Adaptation</span>
+                </div>
+                <div class="markdown-content" v-html="renderMarkdown(result.revised_decision)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Boardroom Agents -->
+          <div v-show="activeTab === 'agents'">
+            <div class="agents-grid">
+              <div class="agent-card" v-for="(agent, idx) in result.agents" :key="idx">
+                <div class="agent-card-top">
+                  <div class="agent-avatar">{{ getAgentIcon(agent.role) }}</div>
+                  <div>
+                    <div class="agent-title">{{ agent.role }}</div>
+                    <span style="font-size:11px; color:var(--cyan-glow); font-weight:600;">Capability Slot {{ idx + 1 }}</span>
+                  </div>
+                </div>
+                <div class="agent-focus" v-if="agent.goal">
+                  <strong>Mandate:</strong> {{ agent.goal }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Strategy Matrix & Math -->
+          <div v-show="activeTab === 'matrix'">
+            <div v-if="result.matrix && result.matrix.strategies">
+              <h3 style="font-family:'Outfit'; font-size:16px; margin-bottom:12px;">📊 Dynamic Strategy Comparison Matrix</h3>
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th>Dimension</th>
+                    <th v-for="s in result.matrix.strategies" :key="s.strategy_name">
+                      {{ s.strategy_name }}
+                      <span v-if="s.is_feasible" style="display:block; font-size:11px; color:var(--emerald-glow); font-weight:normal;">[FEASIBLE]</span>
+                      <span v-else style="display:block; font-size:11px; color:var(--rose-glow); font-weight:normal;">[INFEASIBLE]</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Financial Viability & Runway</strong></td>
+                    <td v-for="s in result.matrix.strategies" :key="s.strategy_name">{{ s.financial_viability }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Business Value & Moat</strong></td>
+                    <td v-for="s in result.matrix.strategies" :key="s.strategy_name">{{ s.business_value }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Market & Customer Fit</strong></td>
+                    <td v-for="s in result.matrix.strategies" :key="s.strategy_name">{{ s.market_customer_fit }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Operational Feasibility</strong></td>
+                    <td v-for="s in result.matrix.strategies" :key="s.strategy_name">{{ s.operational_feasibility }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Risk Profile</strong></td>
+                    <td v-for="s in result.matrix.strategies" :key="s.strategy_name">{{ s.risk_level }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style="margin-top:14px; padding:12px; background:var(--bg-surface); border-radius:var(--radius-sm); font-size:12.5px; color:var(--text-secondary);">
+                <strong>Synthesis:</strong> {{ result.matrix.comparative_summary }}
+              </div>
+            </div>
+            <div v-else style="color:var(--text-muted); padding:20px; text-align:center;">
+              Strategy Matrix details rendered directly inside CEO Decision.
+            </div>
+          </div>
+
+          <!-- Tab 4: Protocol Trace -->
+          <div v-show="activeTab === 'trace'">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button :class="['step-pill', traceFilter === '' ? 'active' : '']" @click="traceFilter = ''">All Stages</button>
+                <button v-for="s in allProtocolStages" :key="s" :class="['step-pill', traceFilter === s ? 'active' : '']" @click="traceFilter = s">{{ s }}</button>
+              </div>
+            </div>
+
+            <div class="trace-list">
+              <div class="trace-item" v-for="(rec, idx) in filteredRecords" :key="idx">
+                <div class="trace-item-header">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span :class="['trace-stage-badge', 'badge-' + rec.stage.toLowerCase()]">{{ rec.stage }}</span>
+                    <strong style="font-size:13px;">{{ rec.agent_name }}</strong>
+                    <span style="font-size:12px; color:var(--text-muted);">({{ rec.agent_role }})</span>
+                  </div>
+                  <span style="font-size:11px; color:var(--text-muted);">Event #{{ idx + 1 }}</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                  <strong>Task:</strong> {{ rec.task_name }}
+                </div>
+                <div class="trace-output markdown-content" v-html="renderMarkdown(rec.output)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: Case Profile -->
+          <div v-show="activeTab === 'profile'">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div class="metric-card" v-for="(val, key) in profileKeyValues" :key="key">
+                <span class="metric-label">{{ formatProfileKey(key) }}</span>
+                <span style="font-size:13px; color:var(--text-primary);">{{ formatProfileVal(val) }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      selectedDomain: 'mobility',
+      executionMode: 'mock',
+      caseText: '',
+      surpriseText: '',
+      hasSurprise: false,
+      isRunning: false,
+      errorMessage: '',
+      statusMessage: 'Checking API status...',
+      activeTab: 'decision',
+      traceFilter: '',
+      presets: {},
+      result: null,
+      allProtocolStages: ['ANALYSE', 'SHARE', 'CHALLENGE', 'RESPONSE', 'COMPARE', 'DECIDE', 'SURPRISE', 'REASSESS']
+    };
+  },
+  computed: {
+    filteredRecords() {
+      if (!this.result || !this.result.records) return [];
+      if (!this.traceFilter) return this.result.records;
+      return this.result.records.filter(r => r.stage.toUpperCase() === this.traceFilter.toUpperCase());
+    },
+    profileKeyValues() {
+      if (!this.result || !this.result.profile) return {};
+      const p = this.result.profile;
+      return {
+        company: p.company,
+        industry: p.industry,
+        business_objective: p.business_objective,
+        available_capital: p.available_capital,
+        resource_capacity: p.resource_capacity,
+        customer_segments: p.customer_segments,
+        hard_constraints: p.hard_constraints,
+        candidate_strategies: p.candidate_strategies,
+        mandatory_roles: p.mandatory_roles,
+        quantitative_assumptions: p.quantitative_assumptions
+      };
+    }
+  },
+  async mounted() {
+    await this.fetchHealthAndPresets();
+    this.onPresetChange();
+  },
+  methods: {
+    async fetchHealthAndPresets() {
+      try {
+        const [presetsRes, healthRes] = await Promise.all([
+          fetch('/api/presets'),
+          fetch('/api/health')
+        ]);
+        this.presets = await presetsRes.json();
+        const health = await healthRes.json();
+        this.statusMessage = health.llm_configured
+          ? `${health.provider || 'LLM'} Active (${health.model || 'Gemini'})`
+          : 'Deterministic Mock Active (No API key needed)';
+      } catch (err) {
+        this.statusMessage = 'API Offline';
+      }
+    },
+    onPresetChange() {
+      if (!this.selectedDomain || !this.presets[this.selectedDomain]) {
+        this.caseText = '';
+        this.surpriseText = '';
+        this.hasSurprise = false;
+        return;
+      }
+      const p = this.presets[this.selectedDomain];
+      this.caseText = this.formatCaseText(p.case);
+      this.surpriseText = this.formatSurpriseText(p.surprise);
+      this.hasSurprise = !!this.surpriseText;
+    },
+    toggleSurprise() {
+      if (this.hasSurprise) {
+        this.surpriseText = '';
+        this.hasSurprise = false;
+      } else if (this.selectedDomain && this.presets[this.selectedDomain]) {
+        this.surpriseText = this.formatSurpriseText(this.presets[this.selectedDomain].surprise);
+        this.hasSurprise = true;
+      } else {
+        this.surpriseText = 'Board of Directors mandates an immediate 30% reduction in capital budget.';
+        this.hasSurprise = true;
+      }
+    },
+    formatCaseText(c) {
+      if (!c) return '';
+      const constraints = (c.constraints || []).map(x => `- ${x}`).join('\n');
+      const assumptions = (c.assumptions || []).map(x => `- ${x}`).join('\n');
+      return `# ${c.title}\n\n## Problem Statement\n${c.problem}\n\n## Strategic Objective\n${c.objective}\n\n## Background Context\n${c.context}\n\n## Constraints\n${constraints}\n\n## Baseline Assumptions\n${assumptions}`;
+    },
+    formatSurpriseText(s) {
+      if (!s) return '';
+      return `${s.description}`;
+    },
+    async runSwarm() {
+      this.isRunning = true;
+      this.errorMessage = '';
+      try {
+        const payload = {
+          case_text: this.caseText,
+          domain: this.selectedDomain || null,
+          surprise_text: this.surpriseText.trim() || null,
+          mode: this.executionMode,
+          run_surprise: !!this.surpriseText.trim()
+        };
+
+        const res = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Boardroom execution failed.');
+        }
+
+        this.result = data;
+        this.activeTab = 'decision';
+      } catch (err) {
+        this.errorMessage = err.message;
+      } finally {
+        this.isRunning = false;
+      }
+    },
+    resetCase() {
+      this.result = null;
+      this.onPresetChange();
+    },
+    renderMarkdown(text) {
+      if (!text) return '';
+      try {
+        return marked.parse(text);
+      } catch (e) {
+        return text;
+      }
+    },
+    getStepClass(stage) {
+      if (!this.result || !this.result.records) return '';
+      const stagesPresent = this.result.records.map(r => r.stage.toUpperCase());
+      if (stagesPresent.includes(stage.toUpperCase())) {
+        return 'done';
+      }
+      return '';
+    },
+    getAgentIcon(role) {
+      const lower = role.toLowerCase();
+      if (lower.includes('research') || lower.includes('intelligence')) return '🔍';
+      if (lower.includes('finance') || lower.includes('cfo') || lower.includes('treasury')) return '💰';
+      if (lower.includes('risk') || lower.includes('cro') || lower.includes('reviewer')) return '🛡️';
+      if (lower.includes('marketing') || lower.includes('cmo') || lower.includes('commercial')) return '🎯';
+      if (lower.includes('operation') || lower.includes('infrastructure') || lower.includes('engineering')) return '⚙️';
+      if (lower.includes('product') || lower.includes('strategy')) return '💡';
+      if (lower.includes('compliance') || lower.includes('quality')) return '⚖️';
+      if (lower.includes('ceo') || lower.includes('executive')) return '🏛️';
+      return '👤';
+    },
+    copyDecision() {
+      const text = this.result.revised_decision || this.result.baseline_decision;
+      if (text) {
+        navigator.clipboard.writeText(text);
+        alert('Decision Markdown copied to clipboard!');
+      }
+    },
+    formatProfileKey(key) {
+      return key.replace(/_/g, ' ').toUpperCase();
+    },
+    formatProfileVal(val) {
+      if (Array.isArray(val)) return val.join(', ') || 'None';
+      if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+      return val || 'UNKNOWN / NOT PROVIDED IN ACTIVE TEST CASE';
+    }
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

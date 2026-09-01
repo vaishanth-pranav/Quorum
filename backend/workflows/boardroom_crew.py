@@ -106,7 +106,9 @@ class BoardroomCrew:
             ],
             process=Process.sequential,
             verbose=is_verbose(),
+            tracing=True,
         )
+
 
         return crew
 
@@ -197,7 +199,9 @@ class BoardroomCrew:
             tasks=[task_surp_finance, task_surp_ops, task_surp_risk, task_surp_ceo],
             process=Process.sequential,
             verbose=is_verbose(),
+            tracing=True,
         )
+
 
         surprise_result = surprise_crew.kickoff()
         revised_output_str = str(surprise_result)

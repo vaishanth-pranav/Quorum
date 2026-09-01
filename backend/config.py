@@ -1,14 +1,15 @@
 """
 Configuration and environment manager for Quorum.
 Loads environment variables and initializes the CrewAI LLM instance based on provider priority:
-1. Explicit MODEL / OPENAI_MODEL_NAME if provided (e.g. gemini/gemini-2.5-flash, gemini/gemini-3.6-flash, gpt-4o).
-2. GEMINI_API_KEY -> gemini/gemini-2.5-flash (with automatic active model compatibility).
+1. Explicit MODEL / OPENAI_MODEL_NAME if provided (defaulting to gemini/gemini-3.7-flash).
+2. GEMINI_API_KEY -> gemini/gemini-3.7-flash.
 3. OPENAI_API_KEY -> gpt-4o-mini.
 4. ANTHROPIC_API_KEY -> anthropic/claude-3-5-haiku-20241022.
 5. GROQ_API_KEY -> groq/llama-3.3-70b-versatile.
 6. OPENAI_API_BASE -> local/custom proxy endpoint.
 7. Clear configuration error if no provider credentials exist.
 """
+
 
 import os
 from pathlib import Path
@@ -80,8 +81,9 @@ def resolve_llm_settings() -> Tuple[str, Optional[str], Optional[str], str]:
 
     # Priority 2: Gemini
     if gemini_key:
-        default_gemini = os.getenv("GEMINI_MODEL") or "gemini/gemini-2.5-flash"
+        default_gemini = os.getenv("GEMINI_MODEL") or "gemini/gemini-3.7-flash"
         return default_gemini, gemini_key, api_base, "Google Gemini"
+
 
     # Priority 3: OpenAI
     if openai_key:
